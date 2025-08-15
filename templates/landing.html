@@ -137,7 +137,7 @@
             display: flex;
             align-items: center;
             gap: 20px;
-            order: 1; /* Add this */
+            /* order: 1;  Add this */
         }
 
         .hamburger-menu {
@@ -337,7 +337,23 @@
                 display: block;
                 cursor: pointer;
             }
-
+<!-- This is advice from ChatGPT -->
+            .hero-section {
+                display: flex;
+                flex-direction: column; /* Stack text above image */
+                align-items: center;
+                padding: 20px;
+            }
+            
+            .hero-content {
+                text-align: center;
+            }
+            
+            .hero-image img {
+                max-width: 100%;
+                height: auto;
+            }
+<!-- End of ChatGPT advice -->
             .dropdown-menu {
                 width: 100%;
                 max-width: 300px;
