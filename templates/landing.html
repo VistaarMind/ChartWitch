@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChartWitch : Copy - Paste & Automate Medical Notes</title>
+    <title>ChartWitch - Copy-Paste & Automate Medical Notes</title>
     
     <!-- Preconnect to third-party domains -->
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -137,7 +137,7 @@
             display: flex;
             align-items: center;
             gap: 20px;
-            /* order: 1;  Add this */
+            order: 1;
         }
 
         .hamburger-menu {
@@ -343,6 +343,7 @@
                 flex-direction: column; /* Stack text above image */
                 align-items: center;
                 padding: 20px;
+                padding-top: 80px;
             }
             
             .hero-content {
@@ -392,7 +393,9 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     </noscript>
 </head>
+    
 <body>
+    
     <div class="landing-container">
         <nav>
             <div class="nav-left">
@@ -417,12 +420,14 @@
                 <a href="#demo-video" class="dropdown-item">Demo Video</a>
             </div>
         </nav>
+        
         <div class="main-logo">
             <img src="{{ url_for('static', filename='logo-dark.svg') }}" alt="ChartWitch Logo" class="logo dark-mode-logo" style="max-width:100%;height:auto;">
             <img src="{{ url_for('static', filename='logo-light.svg') }}" alt="ChartWitch Logo" class="logo light-mode-logo" style="max-width:100%;height:auto;">
         <!-- <img src="{{ url_for('static', filename='logo-dark.svg') }}" alt="ChartWitch Logo" class="logo dark-mode-logo" width="150" height="35"> -->
         <!-- <img src="{{ url_for('static', filename='logo-light.svg') }}" alt="ChartWitch Logo" class="logo light-mode-logo" width="150" height="35"> -->
         </div><br>
+        
         <!-- Move logo to hero section -->
         <main>
             <div class="hero-section">
