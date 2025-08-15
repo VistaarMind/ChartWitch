@@ -402,8 +402,10 @@
             </div>
         </nav>
         <div class="main-logo">
-            <img src="{{ url_for('static', filename='logo-dark.svg') }}" alt="ChartWitch Logo" class="logo dark-mode-logo" width="150" height="35">
-            <img src="{{ url_for('static', filename='logo-light.svg') }}" alt="ChartWitch Logo" class="logo light-mode-logo" width="150" height="35">
+            <img src="{{ url_for('static', filename='logo-dark.svg') }}" alt="ChartWitch Logo" class="logo dark-mode-logo" style="max-width:100%;height:auto;">
+            <img src="{{ url_for('static', filename='logo-light.svg') }}" alt="ChartWitch Logo" class="logo light-mode-logo" style="max-width:100%;height:auto;">
+        <!-- <img src="{{ url_for('static', filename='logo-dark.svg') }}" alt="ChartWitch Logo" class="logo dark-mode-logo" width="150" height="35"> -->
+        <!-- <img src="{{ url_for('static', filename='logo-light.svg') }}" alt="ChartWitch Logo" class="logo light-mode-logo" width="150" height="35"> -->
         </div>
         <!-- Move logo to hero section -->
         <main>
