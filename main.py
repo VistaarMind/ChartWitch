@@ -295,6 +295,10 @@ mail.init_app(app)
 def faq():
     return render_template("faq.html")
 
+@app.route("/aboutus")
+def faq():
+    return render_template("aboutus.html")
+
 @app.route("/register", methods=["POST"])
 def register():
     try:
