@@ -296,7 +296,7 @@ def faq():
     return render_template("faq.html")
 
 @app.route("/aboutus")
-def faq():
+def aboutus():
     return render_template("aboutus.html")
 
 @app.route("/register", methods=["POST"])
