@@ -299,6 +299,17 @@ def faq():
 def aboutus():
     return render_template("aboutus.html")
 
+@app.route('/static/sitemap.xml')
+def serve_sitemap():
+    return send_from_directory(app.static_folder, 'sitemap.xml')
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+@app.route('/static/English_salad.js')
+def serve_js():
+    return send_file('English_salad.js', mimetype='application/javascript')
+
 @app.route("/register", methods=["POST"])
 def register():
     try:
