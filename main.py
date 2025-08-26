@@ -300,8 +300,8 @@ def aboutus():
     return render_template("aboutus.html")
 
 @app.route('/static/sitemap.xml')
-def serve_sitemap():
-    return send_from_directory('sitemap.xml', mimetype='application/xml')
+def sitemap():
+    return send_file('sitemap.xml', mimetype='application/xml')
 
 @app.route('/static/English_salad.js')
 def serve_js():
