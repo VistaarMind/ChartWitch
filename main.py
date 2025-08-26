@@ -299,6 +299,11 @@ def faq():
 def aboutus():
     return render_template("aboutus.html")
 
+@app.route("/sitemap")
+def aboutus():
+    return render_template("sitemap.xml")
+
+
 @app.route("/register", methods=["POST"])
 def register():
     try:
