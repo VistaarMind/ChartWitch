@@ -299,10 +299,6 @@ def faq():
 def aboutus():
     return render_template("aboutus.html")
 
-@app.route('/static/sitemap.xml')
-def sitemap():
-    return send_file('sitemap.xml', mimetype='application/xml')
-
 @app.route('/static/English_salad.js')
 def serve_js():
     return send_file('English_salad.js', mimetype='application/javascript')
