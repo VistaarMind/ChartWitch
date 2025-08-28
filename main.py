@@ -299,9 +299,7 @@ def faq():
 def aboutus():
     return render_template("aboutus.html")
 
-@app.route('/static/English_salad.js')
-def serve_js():
-    return send_file('English_salad.js', mimetype='application/javascript')
+## Duplicate route removed: serve_js is defined later in the file
 
 @app.route("/register", methods=["POST"])
 def register():
