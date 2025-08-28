@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, redirect, session, url_for, send_file
+from flask import Flask, request, jsonify, render_template, redirect, session, url_for, send_file, send_from_directory
 import google.generativeai as genai
 from dotenv import load_dotenv
 
@@ -298,6 +298,10 @@ def faq():
 @app.route("/aboutus")
 def aboutus():
     return render_template("aboutus.html")
+
+@app.route('/static/sitemap.xml')
+def serve_sitemap():
+    return send_from_directory(app.static_folder, 'sitemap.xml')
 
 @app.route('/static/English_salad.js')
 def serve_js():
