@@ -301,7 +301,7 @@ def aboutus():
 
 @app.route('/sitemap.xml')
 def serve_sitemap():
-    return send_from_directory(app.static_folder, 'sitemap.xml')
+    return send_from_directory('/static/', 'sitemap.xml')
 
 @app.route('/static/English_salad.js')
 def serve_js():
