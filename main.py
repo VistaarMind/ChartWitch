@@ -299,9 +299,9 @@ def faq():
 def aboutus():
     return render_template("aboutus.html")
 
-@app.route('/static/sitemap.xml')
+@app.route('/sitemap.xml')
 def serve_sitemap():
-    return send_from_directory(app.static, 'sitemap.xml')
+    return send_from_directory('/static/', 'sitemap.xml')
 
 @app.route('/static/English_salad.js')
 def serve_js():
