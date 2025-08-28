@@ -515,7 +515,8 @@ def update_prompt():
     
     # Create new version (use session admin ID if available)
     admin_id = session.get('admin_id', 'admin')
-    mongo.db.prompts.insert_one({
+    # Preserve custom tool metadata if it exists on the current prompt
+    new_doc = {
         "key": prompt_key,
         "text": prompt_text,
         "active": True,
@@ -524,7 +525,17 @@ def update_prompt():
         "updated_at": dt.utcnow(),
         "updated_by": admin_id,
         "version": new_version
-    })
+    }
+    if current_prompt:
+        if current_prompt.get("is_custom_tool"):
+            new_doc["is_custom_tool"] = True
+            if "button_label" in current_prompt:
+                new_doc["button_label"] = current_prompt.get("button_label")
+            if "button_tooltip" in current_prompt:
+                new_doc["button_tooltip"] = current_prompt.get("button_tooltip")
+            if "tab" in current_prompt:
+                new_doc["tab"] = current_prompt.get("tab")
+    mongo.db.prompts.insert_one(new_doc)
     
     logger.info(f"Prompt '{prompt_key}' updated to version {new_version} by admin")
     return jsonify({"message": "Prompt updated successfully", "version": new_version}), 200
@@ -637,9 +648,9 @@ def restore_prompt_version(prompt_id):
         sort=[("version", -1)]
     ).get("version", 0) + 1
     
-    # Insert restored version as new active version
+    # Insert restored version as new active version, preserving custom tool metadata
     admin_id = session.get('admin_id', 'admin')
-    mongo.db.prompts.insert_one({
+    restored_doc = {
         "key": prompt_to_restore["key"],
         "text": prompt_to_restore["text"],
         "active": True,
@@ -649,7 +660,16 @@ def restore_prompt_version(prompt_id):
         "updated_by": admin_id,
         "restored_from": prompt_to_restore["version"],
         "version": new_version
-    })
+    }
+    if prompt_to_restore.get("is_custom_tool"):
+        restored_doc["is_custom_tool"] = True
+        if "button_label" in prompt_to_restore:
+            restored_doc["button_label"] = prompt_to_restore.get("button_label")
+        if "button_tooltip" in prompt_to_restore:
+            restored_doc["button_tooltip"] = prompt_to_restore.get("button_tooltip")
+        if "tab" in prompt_to_restore:
+            restored_doc["tab"] = prompt_to_restore.get("tab")
+    mongo.db.prompts.insert_one(restored_doc)
     
     logger.info(f"Prompt '{prompt_to_restore['key']}' restored to version {prompt_to_restore['version']} by admin")
     return jsonify({"message": "Prompt version restored successfully"}), 200
