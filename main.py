@@ -538,6 +538,31 @@ def update_prompt():
     logger.info(f"Prompt '{prompt_key}' updated to version {new_version} by admin")
     return jsonify({"message": "Prompt updated successfully", "version": new_version}), 200
 
+@app.route("/admin/prompt/delete", methods=["POST"])
+@admin_required
+def delete_prompt():
+    """Soft delete all active versions of a prompt by key."""
+    try:
+        data = request.get_json() or {}
+        prompt_key = data.get("key")
+        if not prompt_key:
+            return jsonify({"error": "Key is required"}), 400
+
+        admin_id = session.get('admin_id', 'admin')
+        result = mongo.db.prompts.update_many(
+            {"key": prompt_key, "active": True},
+            {"$set": {"active": False, "deleted_at": dt.utcnow(), "deleted_by": admin_id}}
+        )
+
+        if result.modified_count == 0:
+            return jsonify({"error": "No active prompt found for given key"}), 404
+
+        logger.info(f"Prompt '{prompt_key}' soft-deleted by admin")
+        return jsonify({"message": "Prompt deleted successfully"}), 200
+    except Exception as e:
+        logger.error(f"Error deleting prompt: {str(e)}")
+        return jsonify({"error": "Failed to delete prompt"}), 500
+
 @app.route("/admin/prompt/history/<prompt_key>", methods=["GET"])
 @admin_required
 def prompt_history(prompt_key):
