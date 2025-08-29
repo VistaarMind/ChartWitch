@@ -152,6 +152,7 @@
                     <div>
                         <a href="/admin/prompt/history/{{ prompt.key }}" class="history-btn">History</a>
                         <button class="edit-btn" onclick="openEditModal('{{ prompt.key }}', `{{ prompt.text }}`)">Edit</button>
+                        <button class="edit-btn" style="background-color:#f44336" onclick="deletePrompt('{{ prompt.key }}')">Delete</button>
                     </div>
                 </div>
                 <div class="prompt-text">{{ prompt.text }}</div>
@@ -299,6 +300,29 @@
                 customToolFields.style.display = 'none';
             }
         });
+
+        // Delete prompt by key
+        function deletePrompt(key) {
+            if (!confirm(`Delete prompt "${key}"? This will disable all active versions.`)) return;
+            fetch('/admin/prompt/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    alert('Prompt deleted');
+                    location.reload();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Failed to delete prompt');
+            });
+        }
     </script>
 </body>
 </html>
