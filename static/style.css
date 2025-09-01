@@ -562,13 +562,17 @@ textarea#outputText {
 
 
 
-/* Ensure custom tools only appear in their container */
+/* Ensure custom tools appear in their assigned tab containers */
 .custom-tool {
-    display: none !important;
+    display: inline-flex !important;
 }
 
-#misc-tools-container .custom-tool {
-    display: inline-flex !important;
+/* Hide custom tools in containers where they don't belong */
+#documentation-tools-container .custom-tool:not([data-tab="documentation"]),
+#diagnostics-tools-container .custom-tool:not([data-tab="diagnostics"]),
+#analytics-tools-container .custom-tool:not([data-tab="analytics"]),
+#misc-tools-container .custom-tool:not([data-tab="misc"]) {
+    display: none !important;
 }
 
 /* Modify existing tools-container styles for compatibility */
