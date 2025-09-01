@@ -384,6 +384,7 @@ Assessment/plan
                 button.setAttribute('data-action', tool.key);
                 button.setAttribute('data-tooltip', tool.button_tooltip);
                 button.setAttribute('data-text', tool.text);
+                button.setAttribute('data-tab', tool.tab || 'misc');
                 
                 button.addEventListener('click', () => {
                     console.log('Dynamic button clicked:', tool.key); // Debug log
@@ -427,6 +428,7 @@ Assessment/plan
                     button.setAttribute('data-action', tool.key);
                     button.setAttribute('data-tooltip', tool.button_tooltip);
                     button.setAttribute('data-text', tool.text);
+                    button.setAttribute('data-tab', tool.tab || 'misc');
                     
                     button.addEventListener('click', () => {
                         processText(tool.key, tool.text);
