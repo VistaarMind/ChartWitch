@@ -176,6 +176,13 @@ def token_required(f):
                 logger.warning(f"Unauthorized access attempt: Invalid token")
                 return jsonify({"error": "Invalid token"}), 401
 
+            # Enforce single-session: token session id must match the one stored for the user
+            token_session_id = decoded_token.get("sid")
+            user_session_id = current_user.get("current_session_id")
+            if not token_session_id or not user_session_id or token_session_id != user_session_id:
+                logger.warning(f"Session mismatch for user {current_user.get('user_id', 'Unknown')}: token sid {token_session_id}, user sid {user_session_id}")
+                return jsonify({"error": "Session invalidated. You have been logged out because your account was used elsewhere."}), 401
+
             # Log access attempt
             logger.info(f"Authorized access by user: {current_user.get('user_id', 'Unknown')}")
         except jwt.ExpiredSignatureError:
@@ -423,12 +430,24 @@ def login():
 
         # Check password
         if bcrypt.checkpw(password.encode("utf-8"), user["password"]):
-            # Create JWT token
+            # Create or rotate server-side session id to enforce single-session
+            session_id = str(uuid.uuid4())
+            mongo.db.users.update_one(
+                {"_id": user["_id"]},
+                {"$set": {
+                    "current_session_id": session_id,
+                    "last_login_at": dt.utcnow(),
+                    "last_login_ip": request.remote_addr
+                }}
+            )
+
+            # Create JWT token including session id
             token = jwt.encode(
                 {
                     "email_hash": email_hash,
                     "exp": dt.utcnow() + timedelta(hours=1),
-                    "user_id": user.get("user_id")
+                    "user_id": user.get("user_id"),
+                    "sid": session_id
                 },
                 app.config["SECRET_KEY"],
                 algorithm="HS256"
@@ -443,6 +462,35 @@ def login():
     except Exception as e:
         logger.error(f"Login error: {str(e)}")
         return jsonify({"error": "Authentication failed"}), 500
+
+@app.route("/api/logout", methods=["POST"])
+@token_required
+def api_logout():
+    try:
+        token = request.headers.get("Authorization").split(" ")[1]
+        decoded_token = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
+        email_hash = decoded_token.get("email_hash")
+        token_session_id = decoded_token.get("sid")
+
+        user = mongo.db.users.find_one({"email_hash": email_hash})
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        # Only clear if the current session matches the token sid
+        if user.get("current_session_id") == token_session_id:
+            mongo.db.users.update_one(
+                {"_id": user["_id"]},
+                {"$unset": {"current_session_id": ""}, "$set": {"last_logout_at": dt.utcnow()}}
+            )
+        
+        logger.info(f"User logged out: {user.get('user_id', 'Unknown')}")
+        return jsonify({"message": "Logged out successfully"}), 200
+    except jwt.InvalidTokenError:
+        return jsonify({"error": "Invalid token"}), 401
+    except Exception as e:
+        logger.error(f"Logout error: {str(e)}")
+        return jsonify({"error": "Failed to logout"}), 500
+
 # API routes that need tokens can still use token_required
 @app.route("/process", methods=["POST"])
 @token_required
