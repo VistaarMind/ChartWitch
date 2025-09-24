@@ -1487,10 +1487,12 @@ def create_checkout_session():
             line_items=[{
                 'price': stripe_price_id,
                 'quantity': 1,
+                'tax_behavior': 'exclusive',
             }],
             mode='subscription',
             success_url=request.host_url + 'payment/success?session_id={CHECKOUT_SESSION_ID}',
             cancel_url=request.host_url + 'payment/cancel',
+            automatic_tax={'enabled': True},
         )
         
         logger.info(f"Checkout session created successfully: {checkout_session.id}")
