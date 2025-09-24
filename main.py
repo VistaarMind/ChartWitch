@@ -1112,19 +1112,78 @@ def get_agreement(agreement_type):
             <h3>End User License Agreement</h3>
             <div class="agreement-section">
                 <h4>1. Introduction</h4>
-                <p>This End User License Agreement ("Agreement") is a legal agreement between you and ChartWitch ("Company", "we", "us", or "our") for the use of our medical documentation software and services.</p>
+                <p>This End User License Agreement (“Agreement” or “EULA”) is a legal agreement between you (“User,” “you,” or “your”) and VistaarMind LLC, doing business as ChartWitch.com (“Company,” “we,” “us,” or “our”), regarding your use of the ChartWitch.com web-based software-as-a-service platform (the “Service”). By creating an account, subscribing, or using the Service, you agree to be bound by this Agreement. If you do not agree, you may not use the Service.</p>
                 
                 <h4>2. License Grant</h4>
-                <p>Subject to the terms of this Agreement, we grant you a limited, non-exclusive, non-transferable license to use our software for medical documentation purposes.</p>
+                <p>Subject to your compliance with this Agreement, VistaarMind LLC grants you a limited, non-exclusive, non-transferable, revocable license to access and use the Service for your personal or professional clinical efficiency purposes. </p>
+
+                <br>You acknowledge that:
+                <li>The Service is licensed, not sold</li>.
+                <li>All rights, title, and interest in the Service remain with VistaarMind LLC.</li></p>
                 
                 <h4>3. HIPAA Compliance</h4>
                 <p>Our service is designed to be HIPAA compliant. You agree to use the service in compliance with all applicable healthcare privacy laws and regulations.</p>
+
+                <h4>4. User Responsibilities</h4>
+                <p>
+                <li>Verification of Output: The Service generates AI-assisted outputs. You are solely responsible for verifying the accuracy, completeness, and appropriateness of all content before using it in clinical documentation, decision-making, or patient care.</li>
+                <li>De-Identification of Data: Although the Service is HIPAA-compliant, you are advised to de-identify patient information to the fullest extent possible before inputting it into the application.</li>
+                <li>Compliance with Laws: You are responsible for complying with all applicable laws, regulations, and professional standards in your jurisdiction, including HIPAA (U.S.), GDPR (EU/EEA), PIPEDA (Canada), or other regional privacy and healthcare data laws.</li> 
+                </p>
+                
+                <h4>5. Subscription & Payment</h4>
+                <p>
+                <li>Fee: The Service is available by subscription at $6.99 per month (excluding applicable sales tax, VAT, or regional fees).</li>
+                <li>Billing: Subscriptions are billed monthly in advance to your chosen payment method.</li>
+                <li>Cancellation: You may cancel at any time. Access will remain available until the end of the current billing cycle. Partial refunds are not provided.</li>
+                </p>
+
+                <h4>6. International Use</h4>
+                <p>
+                <li>U.S. Users: The Service is designed to comply with HIPAA safeguards.</li>
+                <li>Canadian Users: Users are responsible for compliance with the Personal Information Protection and Electronic Documents Act (PIPEDA) and applicable provincial regulations.</li>
+                <li>EU/EEA Users: Users must ensure compliance with the General Data Protection Regulation (GDPR). By using the Service, you consent to the transfer of your information to the United States for processing.</li>
+                <li>Asian & Other International Users: You are responsible for ensuring compliance with your country’s applicable data protection and healthcare regulations.</li>
+                </p>
+                
+                <h4>7. Acceptable Use</h4>
+                <p> You agree not to:
+                <li>Use the Service for unlawful, fraudulent, or harmful purposes.</li>
+                <li>Share your account or allow unauthorized access.</li>
+                <li>Attempt to reverse engineer, copy, or modify the Service.</li>
+                <li>Input data you are not legally permitted to disclose.</li>
+                </p>
+
+                <h4>8. Limitation of Liability</h4>
+                <p>To the fullest extent permitted by law:
+                The Service is provided “as is” and “as available” without warranties of any kind, express or implied. VistaarMind LLC shall not be liable for any damages, including errors in AI output, reliance on generated content, data loss, or unauthorized access. Users accept all responsibility for clinical or professional use of outputs.
+                </p>
+                
+                <h4>9. Indemnification</h4>
+                <p>You agree to indemnify and hold harmless VistaarMind LLC, its officers, employees, and affiliates from any claims, liabilities, damages, or expenses arising out of your use of the Service or violation of this Agreement.</p>
+
+                <h4>10. Intellectual Property</h4>
+                <p>The Service, including software, user interface, logos, trademarks, and related materials, are the exclusive property of VistaarMind LLC. This Agreement does not grant you ownership rights.</p>
+
+                <h4>11. Governing Law & Jurisdiction</h4>
+                <p><li>For U.S. users: This Agreement shall be governed by the laws of the State of South Dakota, USA, United States.</li>
+                <li>For international users: You agree that disputes shall be resolved exclusively in the jurisdiction of South Dakota, USA, unless prohibited by local law.</li></p>
+
+                <h4>12. Updates to this Agreement</h4>
+                <p>We may revise this Agreement from time to time. Any changes will be effective immediately upon posting. Your continued use of the Service constitutes acceptance of the revised Agreement.</p>
                 
                 <h4>4. Data Security</h4>
                 <p>We implement industry-standard security measures to protect patient information. However, you are responsible for maintaining the security of your login credentials.</p>
+
+                <h4>12. Contact Information</h4>
+                <p>For questions about this Agreement, please contact:
+                <br>VistaarMind LLC<br>
+                DBA: ChartWitch.com<br>
+                Email: Support@chartwitch.com<br>
+                Address: VistaarMind LLC, 25 First Ave. SW STE A, Watertown, SD 57201<br>
+                </p>
+
                 
-                <h4>5. Limitations</h4>
-                <p>You may not: (a) modify or create derivative works of the software; (b) reverse engineer the software; (c) use the software for illegal purposes.</p>
             </div>
             """
         },
