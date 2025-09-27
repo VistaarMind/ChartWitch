@@ -1,6 +1,8 @@
 // Modify the shortify function to accept and return text
 function shortify(outputText) {
     let replace_text = outputText;
+
+    replace_text = replace_text.replace(/Dr\.\s+[A-Za-z.-]+(\s+[A-Za-z.-]+)*/g, "Doctor");
     
     //PATHOLOGY
 
