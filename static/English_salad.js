@@ -2,6 +2,16 @@
 function shortify(outputText) {
     let replace_text = outputText;
 
+    //DE-IDENTIFY DATA
+    
+    replace_text = replace_text.replace(/avera mckennan/gi,"Hospital");
+    replace_text = replace_text.replace(/avera/gi," ");
+    replace_text = replace_text.replace(/mckennan/gi," ");
+    replace_text = replace_text.replace(/south dakota/gi," ");
+    replace_text = replace_text.replace(/minnesota/gi," ");
+    replace_text = replace_text.replace(/iowa/gi," ");
+    replace_text = replace_text.replace(/nebraska/gi," ");
+    replace_text = replace_text.replace(/north dakota/gi," ");
     replace_text = replace_text.replace(/Dr\.\s+[A-Za-z.-]+(\s+[A-Za-z.-]+)*/g, "Doctor");
     
     //PATHOLOGY
