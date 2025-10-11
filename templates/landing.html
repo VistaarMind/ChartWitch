@@ -56,6 +56,17 @@
             color: var(--text-dark);
             background-color: var(--background-light);
             transition: background-color 0.3s, color 0.3s;
+            /* Prevent layout shifts */
+            overflow-x: hidden;
+        }
+        
+        /* Prevent FOUT (Flash of Unstyled Text) */
+        .font-loading {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .fonts-loaded {
+            font-family: 'Poppins', sans-serif;
         }
 
         
@@ -346,6 +357,28 @@
             color: var(--primary-light);
         }
 
+        /* Loading state */
+        .loading {
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        
+        .loaded {
+            opacity: 1;
+        }
+        
+        /* Skeleton loading for images */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
         /* Responsive styles */
         @media (max-width: 768px) {
             .nav-buttons {
@@ -384,7 +417,7 @@
                 max-width: 100%;
                 height: auto;
             }
-?* End of ChatGPT advice */
+            /* End of ChatGPT advice */
             .dropdown-menu {
                 width: 100%;
                 max-width: 300px;
@@ -407,14 +440,16 @@
 
     </style>
     
-    <!-- Load non-critical CSS asynchronously -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}" media="print" onload="this.media='all'">
+    <!-- Load critical CSS immediately -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}">
     
     <!-- Font display swap for better text rendering -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Slab:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'" crossorigin>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Slab:wght@400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Slab:wght@400;500;600;700&display=swap"></noscript>
     
     <!-- Load Font Awesome asynchronously -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" media="print" onload="this.media='all'" crossorigin>
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"></noscript>
     
     <!-- Fallback for browsers that don't support onload -->
     <noscript>
@@ -424,7 +459,7 @@
     </noscript>
 </head>
     
-<body>
+<body class="font-loading loading">
     
     <div class="landing-container">
         <nav>
@@ -453,10 +488,8 @@
         </nav>
         
         <div class="main-logo">
-            <img src="{{ url_for('static', filename='logo-dark.svg') }}" alt="ChartWitch Logo" class="logo dark-mode-logo" style="max-width:100%;height:auto;">
-            <img src="{{ url_for('static', filename='logo-light.svg') }}" alt="ChartWitch Logo" class="logo light-mode-logo" style="max-width:100%;height:auto;">
-        <!-- <img src="{{ url_for('static', filename='logo-dark.svg') }}" alt="ChartWitch Logo" class="logo dark-mode-logo" width="150" height="35"> -->
-        <!-- <img src="{{ url_for('static', filename='logo-light.svg') }}" alt="ChartWitch Logo" class="logo light-mode-logo" width="150" height="35"> -->
+            <img src="{{ url_for('static', filename='logo-dark.svg') }}" alt="ChartWitch Logo" class="logo dark-mode-logo" style="max-width:100%;height:auto;" width="300" height="70" loading="eager">
+            <img src="{{ url_for('static', filename='logo-light.svg') }}" alt="ChartWitch Logo" class="logo light-mode-logo" style="max-width:100%;height:auto;" width="300" height="70" loading="eager">
         </div>
         
         <!-- Move logo to hero section -->
@@ -473,7 +506,7 @@
                     </div>
                 </div>
              <div class="hero-image">
-                    <img src="{{ url_for('static', filename='hero-image.svg') }}" alt="Medical notes automation" width="400" height="400">
+                    <img src="{{ url_for('static', filename='hero-image.svg') }}" alt="Medical notes automation" width="400" height="400" loading="eager">
                 </div> 
             </div>
 
@@ -538,7 +571,7 @@
                 <h2>How ChartWitch Works</h2>
                 <div class="how-it-works-container">
                     <div class="how-it-works-video">
-                        <img src="{{ url_for('static', filename='how-it-works.gif') }}" alt="How ChartWitch works" class="process-gif">
+                        <img src="{{ url_for('static', filename='how-it-works.gif') }}" alt="How ChartWitch works" class="process-gif" loading="lazy">
                     </div>
                     <div class="how-it-works-steps">
                         <div class="step">
@@ -620,8 +653,8 @@
             <div class="footer-content">
                 <div class="footer-logo">
                     <div class="logo-container">
-                        <img src="{{ url_for('static', filename='logo-dark.svg') }}" alt="ChartWitch Logo" class="logo dark-mode-logo" width="150" height="35">
-                        <img src="{{ url_for('static', filename='logo-dark.svg') }}" alt="ChartWitch Logo" class="logo light-mode-logo" width="150" height="35">
+                        <img src="{{ url_for('static', filename='logo-dark.svg') }}" alt="ChartWitch Logo" class="logo dark-mode-logo" width="150" height="35" loading="lazy">
+                        <img src="{{ url_for('static', filename='logo-light.svg') }}" alt="ChartWitch Logo" class="logo light-mode-logo" width="150" height="35" loading="lazy">
                     </div>
                     <p>Copy-Paste & Automate</p>
                 </div>
@@ -662,7 +695,43 @@
         </button>
     </div>
 
+    <!-- Critical loading script -->
+    <script>
+        // Handle font loading and page loading state
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if fonts are loaded
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(function() {
+                    document.body.classList.remove('font-loading');
+                    document.body.classList.add('fonts-loaded');
+                });
+            } else {
+                // Fallback for browsers without Font Loading API
+                setTimeout(function() {
+                    document.body.classList.remove('font-loading');
+                    document.body.classList.add('fonts-loaded');
+                }, 100);
+            }
+            
+            // Show page content
+            document.body.classList.remove('loading');
+            document.body.classList.add('loaded');
+        });
+        
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                document.body.classList.add('loaded');
+            }
+        });
+    </script>
+    
     <!-- Defer JavaScript loading -->
     <script src="{{ url_for('static', filename='landing.js') }}" defer></script>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="{{ url_for('static', filename='hero-image.svg') }}" as="image">
+    <link rel="preload" href="{{ url_for('static', filename='logo-light.svg') }}" as="image">
+    <link rel="preload" href="{{ url_for('static', filename='logo-dark.svg') }}" as="image">
 </body>
 </html>
