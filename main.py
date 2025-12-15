@@ -22,11 +22,14 @@ from config import (
     MAIL_DEFAULT_SENDER
 )
 from flask_pymongo import PyMongo
+from pymongo import MongoClient
 import logging
 import os
 import uuid
 import secrets
 import base64
+import certifi
+import time
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -58,12 +61,64 @@ app.config["PERMANENT_SESSION_LIFETIME"] = datetime.timedelta(hours=1)
 
 # Load MongoDB URI first
 MONGO_URI = load_mongo_uri()
+# Configure MongoDB with SSL certificate verification using certifi
+# Extract database name from URI if present
+from urllib.parse import urlparse
+parsed_uri = urlparse(MONGO_URI)
+db_name = parsed_uri.path[1:] if parsed_uri.path else None  # Remove leading '/'
+
+# Create MongoClient with SSL certificate verification
+client = MongoClient(
+    MONGO_URI,
+    tlsCAFile=certifi.where(),
+    tlsAllowInvalidCertificates=False
+)
+# Set the URI in config (PyMongo needs this for database name extraction)
 app.config["MONGO_URI"] = MONGO_URI
-mongo = PyMongo(app)  # Initialize MongoDB connection
+# Initialize PyMongo without connecting (to avoid SSL error)
+mongo = PyMongo(app, connect=False)
+# Override the client with our SSL-configured client
+mongo.cx = client
+# Set the database reference properly
+if db_name:
+    mongo.db = client[db_name]
+else:
+    # If no database name in URI, use the default from PyMongo or 'chartwitch'
+    mongo.db = client.get_database()
 
 # Load API keys
 GEMINI_API_KEY = load_api_key()
 genai.configure(api_key=GEMINI_API_KEY)
+
+# Load Gemini model name from environment variable
+# Default to gemini-2.5-flash (paid/GA tier) with compatible variants as fallbacks
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
+FREE_GEMINI_MODELS = [
+    'gemini-2.5-flash',
+    'models/gemini-2.5-flash',
+    'gemini-2.5-flash-001',
+    'models/gemini-2.5-flash-001',
+    'gemini-2.5-flash-latest',
+    'models/gemini-2.5-flash-latest'
+]
+logger.info(f"Using Gemini model preference: {GEMINI_MODEL}")
+
+def get_generative_model(preferred_model: str = GEMINI_MODEL):
+    """Return a generative model instance using only free-tier Gemini models."""
+    attempted = []
+    candidates = [preferred_model] + [m for m in FREE_GEMINI_MODELS if m != preferred_model]
+    last_error = None
+    for model_name in candidates:
+        try:
+            logger.info(f"Attempting to initialise Gemini model '{model_name}'")
+            model = genai.GenerativeModel(model_name)
+            return model, model_name
+        except Exception as exc:
+            attempted.append(model_name)
+            last_error = exc
+            logger.warning(f"Gemini model '{model_name}' unavailable: {exc}")
+            continue
+    raise RuntimeError(f"All configured free-tier Gemini models are unavailable. Attempted: {attempted}. Last error: {last_error}")
 
 # HIPAA Encryption Class with deterministic hashing for emails
 class HIPAAEncryption:
@@ -359,21 +414,28 @@ def register():
 @app.route("/api/profile")
 @token_required
 def get_profile():
-    token = request.headers.get("Authorization").split(" ")[1]
-    decoded = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
-    email_hash = decoded.get("email_hash")
-    user = mongo.db.users.find_one({"email_hash": email_hash})
-    if not user:
-        return jsonify({"error": "User not found"}), 404
     try:
-        # Decrypt fields as needed
-        first_name = HIPAAEncryption.decrypt_data(user.get('firstName', ''), app.config['SECRET_KEY'])
-        last_name = HIPAAEncryption.decrypt_data(user.get('lastName', ''), app.config['SECRET_KEY'])
-        email = HIPAAEncryption.decrypt_data(user.get('email', ''), app.config['SECRET_KEY'])
-        name = f"{first_name} {last_name}"
+        token = request.headers.get("Authorization").split(" ")[1]
+        decoded = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
+        email_hash = decoded.get("email_hash")
+        
+        if not email_hash:
+            return jsonify({"error": "Invalid token"}), 401
+            
+        user = mongo.db.users.find_one({"email_hash": email_hash})
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+            
+        # Safely decrypt fields – fall back to placeholders if legacy data cannot be decoded
+        first_name = safe_decrypt_field(user.get('firstName'), 'firstName', 'User')
+        last_name = safe_decrypt_field(user.get('lastName'), 'lastName', '')
+        email = safe_decrypt_field(user.get('email'), 'email', 'Unavailable')
+        name = f"{first_name} {last_name}".strip()
+        if not name:
+            name = "User"
     except Exception as e:
-        app.logger.error(f"Profile decryption error for {email_hash}: {str(e)}")
-        return jsonify({"error": "Profile data corrupted or missing"}), 500
+        logger.error(f"Profile endpoint error: {str(e)}")
+        return jsonify({"error": "Failed to retrieve profile"}), 500
 
     # Determine subscription status
     subscription_status = user.get('status', 'Unknown')
@@ -504,15 +566,33 @@ def process_text():
         return jsonify({"error": "Missing required fields"}), 400
     
     try:
-        model = genai.GenerativeModel("gemini-2.0-flash-lite")
+        # Obtain a free-tier Gemini model with fallback support
+        model, model_name = get_generative_model()
+        
         anonymized_text = anonymize_text(text)
         
         prompt_text = get_prompt(action)
         if not prompt_text:
             return jsonify({"error": "Invalid action"}), 400
 
-        response = model.generate_content(prompt_text + "\n\n" + anonymized_text)
-        output_text = getattr(response, "text", "No response generated.")
+        full_prompt = prompt_text + "\n\n" + anonymized_text
+        generation_config = {
+            "temperature": 0.7,
+            "top_p": 0.95,
+            "top_k": 40,
+            "max_output_tokens": 2048,
+        }
+
+        # Generate content with retry and model-not-found fallback handling
+        output_text = generate_ai_content_with_retry(
+            model,
+            full_prompt,
+            generation_config=generation_config,
+            current_model_name=model_name
+        )
+        
+        # Log successful processing
+        logger.info(f"AI processing successful for action: {action} using model: {model_name}")
         
         # Return result with flag to trigger frontend shortening
         return jsonify({
@@ -523,7 +603,6 @@ def process_text():
     except Exception as e:
         logger.error(f"AI processing error: {str(e)}")
         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
-
 # Modified admin routes to use admin_required instead of token_required
 @app.route("/admin/prompts", methods=["GET"])
 @admin_required
@@ -696,6 +775,73 @@ def get_prompt(key):
     if prompt:
         return prompt["text"]
     return None
+
+def generate_ai_content_with_retry(model, prompt_text, max_retries=3, current_model_name=None, generation_config=None):
+    """
+    Generate AI content with retry logic for rate limiting (429 errors).
+    Uses exponential backoff for retries.
+    
+    Args:
+        model: The GenerativeModel instance
+        prompt_text: The full prompt text to send
+        max_retries: Maximum number of retry attempts (default: 3)
+        current_model_name: Name of the model currently in use
+        generation_config: Optional generation config dict passed to generate_content
+    
+    Returns:
+        The generated text response
+    
+    Raises:
+        Exception: If all retries are exhausted or a non-retryable error occurs
+    """
+    for attempt in range(max_retries):
+        try:
+            if generation_config:
+                response = model.generate_content(prompt_text, generation_config=generation_config)
+            else:
+                response = model.generate_content(prompt_text)
+            output_text = getattr(response, "text", "No response generated.")
+            return output_text
+        except Exception as e:
+            error_str = str(e)
+            
+            # Check if it's a 429 rate limit error
+            if "429" in error_str or "Resource exhausted" in error_str or "quota" in error_str.lower():
+                if attempt < max_retries - 1:
+                    # Calculate exponential backoff: 2^attempt seconds
+                    wait_time = 2 ** attempt
+                    logger.warning(f"Rate limit hit (429), retrying in {wait_time} seconds (attempt {attempt + 1}/{max_retries})")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    # Last attempt failed
+                    logger.error(f"Rate limit error after {max_retries} attempts: {error_str}")
+                    raise Exception("API rate limit exceeded. Please wait a moment and try again. The service is currently handling high demand.")
+            # Check if it's a 404 model not found error - try fallback model
+            elif "404" in error_str and "not found" in error_str.lower():
+                fallback_candidates = [m for m in FREE_GEMINI_MODELS if m != current_model_name]
+                for fallback_name in fallback_candidates:
+                    try:
+                        logger.warning(f"Model '{current_model_name}' not found, attempting fallback model '{fallback_name}'")
+                        fallback_model = genai.GenerativeModel(fallback_name)
+                        if generation_config:
+                            response = fallback_model.generate_content(prompt_text, generation_config=generation_config)
+                        else:
+                            response = fallback_model.generate_content(prompt_text)
+                        output_text = getattr(response, "text", "No response generated.")
+                        logger.info(f"Successfully used fallback model '{fallback_name}'")
+                        return output_text
+                    except Exception as fallback_error:
+                        logger.error(f"Fallback model '{fallback_name}' failed: {fallback_error}")
+                        continue
+                raise Exception(f"All free-tier Gemini models unavailable. Original error: {error_str}")
+            else:
+                # Non-retryable error, raise immediately
+                logger.error(f"Non-retryable AI error: {error_str}")
+                raise
+    
+    # Should never reach here, but just in case
+    raise Exception("Failed to generate content after multiple attempts")
 @app.route("/admin/prompt/restore/<prompt_id>", methods=["POST"])
 @admin_required
 def restore_prompt_version(prompt_id):
@@ -1143,7 +1289,7 @@ def get_agreement(agreement_type):
                 <li>U.S. Users: The Service is designed to comply with HIPAA safeguards.</li>
                 <li>Canadian Users: Users are responsible for compliance with the Personal Information Protection and Electronic Documents Act (PIPEDA) and applicable provincial regulations.</li>
                 <li>EU/EEA Users: Users must ensure compliance with the General Data Protection Regulation (GDPR). By using the Service, you consent to the transfer of your information to the United States for processing.</li>
-                <li>Asian & Other International Users: You are responsible for ensuring compliance with your country’s applicable data protection and healthcare regulations.</li>
+                <li>Asian & Other International Users: You are responsible for ensuring compliance with your country's applicable data protection and healthcare regulations.</li>
                 </p>
                 
                 <h4>7. Acceptable Use</h4>
@@ -1156,7 +1302,7 @@ def get_agreement(agreement_type):
 
                 <h4>8. Limitation of Liability</h4>
                 <p>To the fullest extent permitted by law:
-                The Service is provided “as is” and “as available” without warranties of any kind, express or implied. VistaarMind LLC shall not be liable for any damages, including errors in AI output, reliance on generated content, data loss, or unauthorized access. Users accept all responsibility for clinical or professional use of outputs.
+                The Service is provided "as is" and "as available" without warranties of any kind, express or implied. VistaarMind LLC shall not be liable for any damages, including errors in AI output, reliance on generated content, data loss, or unauthorized access. Users accept all responsibility for clinical or professional use of outputs.
                 </p>
                 
                 <h4>9. Indemnification</h4>
@@ -2082,7 +2228,27 @@ def test_email_connection():
         logging.error(f"Email connection failed: {str(e)}")
         return False
 
+def safe_decrypt_field(value, field_name: str, default=""):
+    """Safely decrypt legacy encrypted fields without breaking the response."""
+    if not value:
+        return default
+    try:
+        return HIPAAEncryption.decrypt_data(value, app.config["SECRET_KEY"])
+    except Exception as exc:
+        logger.warning(
+            "Unable to decrypt field '%s' due to legacy/invalid ciphertext (%s). Returning default.",
+            field_name,
+            exc
+        )
+        return default
+
 if __name__ == "__main__":
-    initialize_default_prompts()
+    try:
+        # Initialize payment collection indexes
+        initialize_payment_collection()
+        # Initialize default prompts in database
+        initialize_default_prompts()
+    except Exception as e:
+        logger.error(f"Initialization error: {str(e)}")
+        # Continue anyway - the app might still work if MongoDB connection is established later
     app.run(debug=False, ssl_context='adhoc')  # Enable HTTPS
-    initialize_payment_collection()
